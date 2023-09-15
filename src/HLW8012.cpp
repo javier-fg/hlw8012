@@ -68,7 +68,7 @@ hlw8012_mode_t HLW8012::toggleMode() {
     return new_mode;
 }
 
-double HLW8012::getCurrent() {
+float HLW8012::getCurrent() {
 
     // Power measurements are more sensitive to switch offs,
     // so we first check if power is 0 to set _current to 0 too
@@ -87,7 +87,7 @@ double HLW8012::getCurrent() {
 
 }
 
-double HLW8012::getVoltage() {
+float HLW8012::getVoltage() {
     if (_use_interrupts) {
         _checkCF1Signal();
     } else if (_mode != _current_mode) {
@@ -97,7 +97,7 @@ double HLW8012::getVoltage() {
     return _voltage;
 }
 
-double HLW8012::getActivePower() {
+float HLW8012::getActivePower() {
     if (_use_interrupts) {
         _checkCFSignal();
     } else {
@@ -107,15 +107,15 @@ double HLW8012::getActivePower() {
     return _power;
 }
 
-double HLW8012::getApparentPower() {
-    double current = getCurrent();
-    double voltage = getVoltage();
+float HLW8012::getApparentPower() {
+    float current = getCurrent();
+    float voltage = getVoltage();
     return voltage * current;
 }
 
-double HLW8012::getReactivePower() {
-    double active = getActivePower();
-    double apparent = getApparentPower();
+float HLW8012::getReactivePower() {
+    float active = getActivePower();
+    float apparent = getApparentPower();
     if (apparent > active) {
         return sqrt(apparent * apparent - active * active);
     } else {
@@ -123,12 +123,12 @@ double HLW8012::getReactivePower() {
     }
 }
 
-double HLW8012::getPowerFactor() {
-    double active = getActivePower();
-    double apparent = getApparentPower();
+float HLW8012::getPowerFactor() {
+    float active = getActivePower();
+    float apparent = getApparentPower();
     if (active > apparent) return 1;
     if (apparent == 0) return 0;
-    return (double) active / apparent;
+    return (float) active / apparent;
 }
 
 unsigned long HLW8012::getEnergy() {
@@ -150,26 +150,26 @@ void HLW8012::resetEnergy() {
     _pulse_count = 0;
 }
 
-void HLW8012::expectedCurrent(double value) {
+void HLW8012::expectedCurrent(float value) {
     if (_current == 0) getCurrent();
     if (_current > 0) _current_multiplier *= (value / _current);
 }
 
 void HLW8012::expectedVoltage(unsigned int value) {
     if (_voltage == 0) getVoltage();
-    if (_voltage > 0) _voltage_multiplier *= ((double) value / _voltage);
+    if (_voltage > 0) _voltage_multiplier *= ((float) value / _voltage);
 }
 
 void HLW8012::expectedActivePower(unsigned int value) {
     if (_power == 0) getActivePower();
-    if (_power > 0) _power_multiplier *= ((double) value / _power);
+    if (_power > 0) _power_multiplier *= ((float) value / _power);
 }
 
 void HLW8012::resetMultipliers() {
     _calculateDefaultMultipliers();
 }
 
-void HLW8012::setResistors(double current, double voltage_upstream, double voltage_downstream) {
+void HLW8012::setResistors(float current, float voltage_upstream, float voltage_downstream) {
     if (voltage_downstream > 0) {
         _current_resistor = current;
         _voltage_resistor = (voltage_upstream + voltage_downstream) / voltage_downstream;
@@ -178,11 +178,37 @@ void HLW8012::setResistors(double current, double voltage_upstream, double volta
 }
 
 void ICACHE_RAM_ATTR HLW8012::cf_interrupt() {
-    
+
     unsigned long now = micros();
+    
     _power_pulse_width = now - _last_cf_interrupt;
     _last_cf_interrupt = now;
-    _pulse_count++;
+
+    // Check if timeout event ocurred
+    if (_power_pulse_width > _pulse_timeout){
+        _notimeout_cf_cntr = 0;  
+        _timeout_interrupt = now;
+        _power_pulse_width = 0;
+        _power = 0;  
+    } 
+
+    // Ignore any values during the PULSE_TIMEOUT microsec after first timeout event
+    if( (now - _timeout_interrupt) < PULSE_TIMEOUT ){
+        _power_pulse_width = 0;
+        _power = 0;
+    }else{
+
+        // Wait for valid measurements, meantime ignore measurements
+        if(_notimeout_cf_cntr <= TIMEOUT_VALID_PULSES){
+            _notimeout_cf_cntr++;
+            _power_pulse_width = 0;
+            _power = 0;
+        }
+    }
+
+    // Increment energy values only on valid signal
+    if (_notimeout_cf_cntr >= TIMEOUT_VALID_PULSES)
+        _pulse_count++;
 }
 
 void ICACHE_RAM_ATTR HLW8012::cf1_interrupt() {
@@ -216,7 +242,12 @@ void ICACHE_RAM_ATTR HLW8012::cf1_interrupt() {
 }
 
 void HLW8012::_checkCFSignal() {
-    if ((micros() - _last_cf_interrupt) > _pulse_timeout) _power_pulse_width = 0;
+
+    // Check for timeout
+    if ((micros() - _last_cf_interrupt) > _pulse_timeout){
+        _power_pulse_width = 0;
+        _power = 0;  
+    } 
 }
 
 void HLW8012::_checkCF1Signal() {

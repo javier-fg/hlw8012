@@ -52,6 +52,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // will have no time to stabilise
 #define PULSE_TIMEOUT       2000000
 
+// Delay time in microseconds to ignore any pulse after a timeout event
+#define TIMEOUT_EVENT_DELAY 100000
+
+// Number of valid measurement events (ISR) after the timeout event
+#define TIMEOUT_VALID_PULSES    3
+
+
 // Define ICACHE_RAM_ATTR for non Espressif platforms
 #ifndef ICACHE_RAM_ATTR
 #define ICACHE_RAM_ATTR
@@ -82,28 +89,28 @@ class HLW8012 {
         hlw8012_mode_t getMode();
         hlw8012_mode_t toggleMode();
 
-        double getCurrent();
-        double getVoltage();
-        double getActivePower();
-        double getApparentPower();
-        double getPowerFactor();
-        double getReactivePower();
+        float getCurrent();
+        float getVoltage();
+        float getActivePower();
+        float getApparentPower();
+        float getPowerFactor();
+        float getReactivePower();
         unsigned long getEnergy(); //in Ws
         void resetEnergy();
 
-        void setResistors(double current, double voltage_upstream, double voltage_downstream);
+        void setResistors(float current, float voltage_upstream, float voltage_downstream);
 
-        void expectedCurrent(double current);
+        void expectedCurrent(float current);
         void expectedVoltage(unsigned int current);
         void expectedActivePower(unsigned int power);
 
-        double getCurrentMultiplier() { return _current_multiplier; };
-        double getVoltageMultiplier() { return _voltage_multiplier; };
-        double getPowerMultiplier() { return _power_multiplier; };
+        float getCurrentMultiplier() { return _current_multiplier; };
+        float getVoltageMultiplier() { return _voltage_multiplier; };
+        float getPowerMultiplier() { return _power_multiplier; };
 
-        void setCurrentMultiplier(double current_multiplier) { _current_multiplier = current_multiplier; };
-        void setVoltageMultiplier(double voltage_multiplier) { _voltage_multiplier = voltage_multiplier; };
-        void setPowerMultiplier(double power_multiplier) { _power_multiplier = power_multiplier; };
+        void setCurrentMultiplier(float current_multiplier) { _current_multiplier = current_multiplier; };
+        void setVoltageMultiplier(float voltage_multiplier) { _voltage_multiplier = voltage_multiplier; };
+        void setPowerMultiplier(float power_multiplier) { _power_multiplier = power_multiplier; };
         void resetMultipliers();
 
     private:
@@ -112,12 +119,12 @@ class HLW8012 {
         unsigned char _cf1_pin;
         unsigned char _sel_pin;
 
-        double _current_resistor = R_CURRENT;
-        double _voltage_resistor = R_VOLTAGE;
+        float _current_resistor = R_CURRENT;
+        float _voltage_resistor = R_VOLTAGE;
 
-        double _current_multiplier; // Unit: us/A
-        double _voltage_multiplier; // Unit: us/V
-        double _power_multiplier;   // Unit: us/W
+        float _current_multiplier; // Unit: us/A
+        float _voltage_multiplier; // Unit: us/V
+        float _power_multiplier;   // Unit: us/W
 
         unsigned long _pulse_timeout = PULSE_TIMEOUT;    //Unit: us
         volatile unsigned long _voltage_pulse_width = 0; //Unit: us
@@ -125,15 +132,17 @@ class HLW8012 {
         volatile unsigned long _power_pulse_width = 0;   //Unit: us
         volatile unsigned long _pulse_count = 0;
 
-        double _current = 0;
-        double _voltage = 0;
-        double _power = 0;
+        float _current = 0;
+        float _voltage = 0;
+        float _power = 0;
 
         unsigned char _current_mode = HIGH;
         volatile unsigned char _mode;
 
         bool _use_interrupts = true;
         volatile unsigned long _last_cf_interrupt = 0;
+        volatile unsigned int  _notimeout_cf_cntr = 0;
+        volatile unsigned long _timeout_interrupt = 0;
         volatile unsigned long _last_cf1_interrupt = 0;
         volatile unsigned long _first_cf1_interrupt = 0;
 

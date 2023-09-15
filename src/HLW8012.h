@@ -83,11 +83,11 @@ class HLW8012 {
         hlw8012_mode_t toggleMode();
 
         double getCurrent();
-        unsigned int getVoltage();
-        unsigned int getActivePower();
-        unsigned int getApparentPower();
+        double getVoltage();
+        double getActivePower();
+        double getApparentPower();
         double getPowerFactor();
-        unsigned int getReactivePower();
+        double getReactivePower();
         unsigned long getEnergy(); //in Ws
         void resetEnergy();
 
@@ -126,8 +126,8 @@ class HLW8012 {
         volatile unsigned long _pulse_count = 0;
 
         double _current = 0;
-        unsigned int _voltage = 0;
-        unsigned int _power = 0;
+        double _voltage = 0;
+        double _power = 0;
 
         unsigned char _current_mode = HIGH;
         volatile unsigned char _mode;

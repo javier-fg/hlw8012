@@ -87,7 +87,7 @@ double HLW8012::getCurrent() {
 
 }
 
-unsigned int HLW8012::getVoltage() {
+double HLW8012::getVoltage() {
     if (_use_interrupts) {
         _checkCF1Signal();
     } else if (_mode != _current_mode) {
@@ -97,7 +97,7 @@ unsigned int HLW8012::getVoltage() {
     return _voltage;
 }
 
-unsigned int HLW8012::getActivePower() {
+double HLW8012::getActivePower() {
     if (_use_interrupts) {
         _checkCFSignal();
     } else {
@@ -107,15 +107,15 @@ unsigned int HLW8012::getActivePower() {
     return _power;
 }
 
-unsigned int HLW8012::getApparentPower() {
+double HLW8012::getApparentPower() {
     double current = getCurrent();
-    unsigned int voltage = getVoltage();
+    double voltage = getVoltage();
     return voltage * current;
 }
 
-unsigned int HLW8012::getReactivePower() {
-    unsigned int active = getActivePower();
-    unsigned int apparent = getApparentPower();
+double HLW8012::getReactivePower() {
+    double active = getActivePower();
+    double apparent = getApparentPower();
     if (apparent > active) {
         return sqrt(apparent * apparent - active * active);
     } else {
@@ -124,8 +124,8 @@ unsigned int HLW8012::getReactivePower() {
 }
 
 double HLW8012::getPowerFactor() {
-    unsigned int active = getActivePower();
-    unsigned int apparent = getApparentPower();
+    double active = getActivePower();
+    double apparent = getApparentPower();
     if (active > apparent) return 1;
     if (apparent == 0) return 0;
     return (double) active / apparent;
@@ -178,6 +178,7 @@ void HLW8012::setResistors(double current, double voltage_upstream, double volta
 }
 
 void ICACHE_RAM_ATTR HLW8012::cf_interrupt() {
+    
     unsigned long now = micros();
     _power_pulse_width = now - _last_cf_interrupt;
     _last_cf_interrupt = now;

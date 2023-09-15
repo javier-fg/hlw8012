@@ -1,10 +1,10 @@
-# FORKED REPOSITORY INFORMATION
+# FORKED INFORMATION
 
-This is a forked version used to implement signal filtering on Power and Current present on some devices that uses the HLW8012 chip.
+This is a forked version used to implement signal filtering on Power and Current signal measurements, present on some devices that uses the HLW8012 chip.
 
 `IMPORTANT: Power/Current signal filtering works only when using interrupt mode.`
 
-Filtering Power/Current signal works once a timeout event is detected a waiting period time is executed, where readings are ignored. After the timeout waiting period expires, a counter implemented to wait for a number of valid measurements, before the measurements are considered valid.
+Filtering Power/Current signal works at ISR level and once a timeout event is detected a waiting period time is executed, where readings are ignored. After the timeout waiting period expires, a counter is used to wait for a number of valid measurements, before the measurements are considered valid.
 
 Configuration parameters:
 

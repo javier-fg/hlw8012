@@ -1,3 +1,22 @@
+# FORKED REPOSITORY INFORMATION
+
+This is a forked version used to implement signal filtering on Power and Current present on some devices that uses the HLW8012 chip.
+
+`IMPORTANT: Power/Current signal filtering works only when using interrupt mode.`
+
+Filtering Power/Current signal works once a timeout event is detected a waiting period time is executed, where readings are ignored. After the timeout waiting period expires, a counter implemented to wait for a number of valid measurements, before the measurements are considered valid.
+
+Configuration parameters:
+
+- TIMEOUT_EVENT_DELAY - Configures the waiting time, after a timeout event, to count valid readings
+- TIMEOUT_VALID_PULSES - Number of minimum valid readings after the timeout event delay period, to give valid measurement readings.
+
+
+
+---
+
+
+
 # HLW8012
 
 HLW8012 library for Arduino and ESP8266 using the [Arduino Core for ESP8266][1].
